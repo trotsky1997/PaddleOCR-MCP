@@ -138,7 +138,7 @@ async def handle_request(request: dict[str, Any]) -> dict[str, Any]:
                 },
                 "serverInfo": {
                     "name": "PaddleOCR-MCP",
-                    "version": "0.1.1"
+                    "version": "0.1.2"
                 }
             }
         }

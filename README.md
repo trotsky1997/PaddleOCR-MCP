@@ -4,51 +4,24 @@ PaddleOCR MCP (Model Context Protocol) server and CLI tool that extracts text fr
 
 ## Installation
 
-### CLI Tool
+### Using uvx (Recommended)
 
-This tool can be run using `uvx`:
+Run directly using `uvx` - no installation needed:
 
 ```bash
-# From local directory
-uvx --from . paddleocr-md <image_path> [-o output.md]
+# Run MCP server (main entry point)
+uvx fast-paddleocr-mcp
 
-# From PyPI (after publishing)
+# Run CLI tool
 uvx fast-paddleocr-mcp paddleocr-md <image_path> [-o output.md]
 ```
 
-Or install it locally:
-
-```bash
-uv pip install -e .
-paddleocr-md <image_path> [-o output.md]
-```
-
-Or install from PyPI:
+### Or Install from PyPI
 
 ```bash
 pip install fast-paddleocr-mcp
-paddleocr-md <image_path> [-o output.md]
-```
-
-### MCP Server
-
-The MCP (Model Context Protocol) server allows integration with MCP clients like Cursor, Claude Desktop, etc.
-
-**Run MCP server with uvx:**
-
-```bash
-# From local directory
-uvx --from . python -m paddleocr_cli.mcp_server
-
-# From PyPI
-uvx fast-paddleocr-mcp paddleocr-mcp
-```
-
-**Or after installation:**
-
-```bash
-pip install fast-paddleocr-mcp
-paddleocr-mcp
+paddleocr-mcp  # MCP server
+paddleocr-md <image_path>  # CLI tool
 ```
 
 ## MCP Server Configuration
@@ -64,69 +37,20 @@ The server provides a single tool called `ocr_image` that:
 
 To use this server with an MCP client (like Cursor, Claude Desktop, etc.), configure it in your MCP settings:
 
-**Using uvx from PyPI (recommended):**
+**Using uvx (recommended - simplest way):**
 
 ```json
 {
   "mcpServers": {
     "paddleocr": {
       "command": "uvx",
-      "args": ["fast-paddleocr-mcp", "paddleocr-mcp"]
+      "args": ["fast-paddleocr-mcp"]
     }
   }
 }
 ```
 
-**Using uvx from local directory:**
-
-```json
-{
-  "mcpServers": {
-    "paddleocr": {
-      "command": "uvx",
-      "args": ["--from", ".", "python", "-m", "paddleocr_cli.mcp_server"]
-    }
-  }
-}
-```
-
-**Or using absolute path:**
-
-```json
-{
-  "mcpServers": {
-    "paddleocr": {
-      "command": "uvx",
-      "args": ["--from", "/absolute/path/to/PaddleOCR-MCP", "python", "-m", "paddleocr_cli.mcp_server"]
-    }
-  }
-}
-```
-
-**Using Python module (if installed locally):**
-
-```json
-{
-  "mcpServers": {
-    "paddleocr": {
-      "command": "python",
-      "args": ["-m", "paddleocr_cli.mcp_server"]
-    }
-  }
-}
-```
-
-**Or if installed from PyPI:**
-
-```json
-{
-  "mcpServers": {
-    "paddleocr": {
-      "command": "paddleocr-mcp"
-    }
-  }
-}
-```
+That's it! The `uvx fast-paddleocr-mcp` command automatically runs the MCP server.
 
 ### MCP Request/Response Example
 
