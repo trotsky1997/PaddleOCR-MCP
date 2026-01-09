@@ -1,0 +1,11 @@
+include README.md
+include LICENSE
+include MCP_README.md
+recursive-exclude * __pycache__
+recursive-exclude * *.py[co]
+recursive-exclude * *.pyc
+exclude test_image*.png
+exclude test_image*.md
+exclude custom_output.md
+exclude .gitignore
+exclude PUBLISH.md
