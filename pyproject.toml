@@ -33,11 +33,10 @@ paddleocr-md = "paddleocr_cli.main:main"
 paddleocr-mcp = "paddleocr_cli.mcp_server:main"
 
 [project.urls]
-Homepage = "https://github.com/yourusername/PaddleOCR-MCP"
-Documentation = "https://github.com/yourusername/PaddleOCR-MCP#readme"
-Repository = "https://github.com/yourusername/PaddleOCR-MCP"
-Issues = "https://github.com/yourusername/PaddleOCR-MCP/issues"
-# TODO: 发布前请更新为实际的 GitHub 仓库地址
+Homepage = "https://github.com/trotsky1997/PaddleOCR-MCP"
+Documentation = "https://github.com/trotsky1997/PaddleOCR-MCP#readme"
+Repository = "https://github.com/trotsky1997/PaddleOCR-MCP"
+Issues = "https://github.com/trotsky1997/PaddleOCR-MCP/issues"
 
 [build-system]
 requires = ["hatchling"]
