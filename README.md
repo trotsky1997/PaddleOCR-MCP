@@ -4,16 +4,16 @@ PaddleOCR MCP (Model Context Protocol) server and CLI tool that extracts text fr
 
 ## Installation
 
-### Using uvx (Recommended)
+### Using uvx (Recommended - No Installation Needed)
 
-Run directly using `uvx` - no installation needed:
+Run directly using `uvx`:
 
 ```bash
-# Run MCP server (main entry point)
-uvx fast-paddleocr-mcp
+# Run MCP server
+uvx --from fast-paddleocr-mcp paddleocr-mcp
 
 # Run CLI tool
-uvx fast-paddleocr-mcp paddleocr-md <image_path> [-o output.md]
+uvx --from fast-paddleocr-mcp paddleocr-md <image_path> [-o output.md]
 ```
 
 ### Or Install from PyPI
@@ -37,20 +37,18 @@ The server provides a single tool called `ocr_image` that:
 
 To use this server with an MCP client (like Cursor, Claude Desktop, etc.), configure it in your MCP settings:
 
-**Using uvx (recommended - simplest way):**
+**Using uvx from PyPI (recommended):**
 
 ```json
 {
   "mcpServers": {
     "paddleocr": {
       "command": "uvx",
-      "args": ["fast-paddleocr-mcp"]
+      "args": ["--from", "fast-paddleocr-mcp", "paddleocr-mcp"]
     }
   }
 }
 ```
-
-That's it! The `uvx fast-paddleocr-mcp` command automatically runs the MCP server.
 
 ### MCP Request/Response Example
 
@@ -101,19 +99,19 @@ The tool is optimized for speed by default with the following settings:
 ```bash
 # Output will be saved as <image_name>.png.md
 # Uses: fast mode + PP-OCRv4 + 640px + auto GPU detection
-uvx --from . paddleocr-md image.png
+uvx --from fast-paddleocr-mcp paddleocr-md image.png
 
 # Specify custom output path
-uvx --from . paddleocr-md image.png -o result.md
+uvx --from fast-paddleocr-mcp paddleocr-md image.png -o result.md
 
 # Force CPU mode
-uvx --from . paddleocr-md image.png --cpu
+uvx --from fast-paddleocr-mcp paddleocr-md image.png --cpu
 
 # Disable fast mode for better accuracy on rotated text
-uvx --from . paddleocr-md image.png --no-fast
+uvx --from fast-paddleocr-mcp paddleocr-md image.png --no-fast
 
 # Use PP-OCRv5 for better accuracy (slower)
-uvx --from . paddleocr-md image.png --ocr-version PP-OCRv5
+uvx --from fast-paddleocr-mcp paddleocr-md image.png --ocr-version PP-OCRv5
 ```
 
 ### Default Optimization Settings
@@ -153,19 +151,19 @@ The tool is optimized for speed by default with these settings:
 
 ```bash
 # Basic usage (uses all optimizations by default: fast + PP-OCRv4 + 640px + auto GPU)
-uvx --from . paddleocr-md photo.jpg
+uvx --from fast-paddleocr-mcp paddleocr-md photo.jpg
 
 # Process with custom output
-uvx --from . paddleocr-md document.png -o extracted_text.md
+uvx --from fast-paddleocr-mcp paddleocr-md document.png -o extracted_text.md
 
 # Better accuracy (slower) - disable fast mode and use PP-OCRv5
-uvx --from . paddleocr-md image.png --no-fast --ocr-version PP-OCRv5 --max-size 960
+uvx --from fast-paddleocr-mcp paddleocr-md image.png --no-fast --ocr-version PP-OCRv5 --max-size 960
 
 # Force CPU mode
-uvx --from . paddleocr-md image.png --cpu
+uvx --from fast-paddleocr-mcp paddleocr-md image.png --cpu
 
 # Use High-Performance Inference (requires HPI dependencies)
-uvx --from . paddleocr-md image.png --hpi
+uvx --from fast-paddleocr-mcp paddleocr-md image.png --hpi
 ```
 
 ## Output Format
