@@ -138,7 +138,7 @@ async def handle_request(request: dict[str, Any]) -> dict[str, Any]:
                 },
                 "serverInfo": {
                     "name": "PaddleOCR-MCP",
-                    "version": "0.1.4"
+                    "version": "0.1.5"
                 }
             }
         }
@@ -196,5 +196,10 @@ async def main():
             print(json.dumps(error_response), flush=True)
 
 
-if __name__ == "__main__":
+def main_sync():
+    """Synchronous entry point for console scripts."""
     asyncio.run(main())
+
+
+if __name__ == "__main__":
+    main_sync()

@@ -1,6 +1,6 @@
 [project]
 name = "fast-paddleocr-mcp"
-version = "0.1.4"
+version = "0.1.5"
 description = "Fast PaddleOCR MCP server - Extract text from images using PaddleOCR with optimized performance"
 readme = "README.md"
 requires-python = ">=3.8"
@@ -29,7 +29,7 @@ dependencies = [
 ]
 
 [project.scripts]
-fast-paddleocr-mcp = "paddleocr_cli.mcp_server:main"
+fast-paddleocr-mcp = "paddleocr_cli.mcp_server:main_sync"
 
 [project.urls]
 Homepage = "https://github.com/trotsky1997/PaddleOCR-MCP"
