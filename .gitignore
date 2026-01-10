@@ -45,8 +45,10 @@ htmlcov/
 
 # Project specific
 *.png.md
+*.png.snapshot.log
 test_image*.png
 test_image*.md
+test_image*.snapshot.log
 custom_output.md
 
 # PaddleOCR models cache

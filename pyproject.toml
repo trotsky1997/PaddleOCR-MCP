@@ -1,6 +1,6 @@
 [project]
 name = "fast-paddleocr-mcp"
-version = "0.4.2"
+version = "0.5.0"
 description = "Fast PaddleOCR MCP server - Extract text from images using PaddleOCR with optimized performance"
 readme = "README.md"
 requires-python = ">=3.8"
@@ -27,6 +27,7 @@ dependencies = [
     "paddleocr>=2.7.0",
     "paddlepaddle>=2.5.0",
     "pillow>=10.0.0",
+    "pyyaml>=6.0.0",
 ]
 
 [project.optional-dependencies]

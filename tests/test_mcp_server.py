@@ -12,14 +12,20 @@ import pytest
 from paddleocr_cli import mcp_server
 
 
-def create_mock_ocr_result(texts):
+def create_mock_ocr_result(texts, dt_polys=None, rec_boxes=None):
     """Create a mock OCRResult (dictionary-like) for PaddleOCR 2.7+"""
     mock_result = MagicMock()
-    mock_result.get = lambda key, default=None: {"rec_texts": texts}.get(key, default)
-    mock_result.__getitem__ = lambda self, key: {"rec_texts": texts}[key]
-    mock_result.__contains__ = lambda self, key: key in {"rec_texts": texts}
-    mock_result.keys.return_value = ["rec_texts"]
-    mock_result.items.return_value = [("rec_texts", texts)]
+    result_dict = {"rec_texts": texts}
+    if dt_polys is not None:
+        result_dict["dt_polys"] = dt_polys
+    if rec_boxes is not None:
+        result_dict["rec_boxes"] = rec_boxes
+    
+    mock_result.get = lambda key, default=None: result_dict.get(key, default)
+    mock_result.__getitem__ = lambda self, key: result_dict[key]
+    mock_result.__contains__ = lambda self, key: key in result_dict
+    mock_result.keys.return_value = list(result_dict.keys())
+    mock_result.items.return_value = list(result_dict.items())
     return mock_result
 
 @pytest.fixture
@@ -141,21 +147,37 @@ class TestCallTool:
                 
                 result = await mcp_server.handle_call_tool("ocr_image", arguments)
                 
-                assert len(result) == 1
+                # Should return both markdown and snapshot files
+                assert len(result) == 2
                 assert result[0].type == "text"
-                output_path = Path(result[0].text)
-                assert output_path.exists()
-                assert output_path.suffix == ".md"
-                # Output should be test_image.png.md
-                assert output_path.name == "test_image.png.md"
+                assert result[1].type == "text"
+                
+                # Check markdown file
+                markdown_path = Path(result[0].text)
+                assert markdown_path.exists()
+                assert markdown_path.suffix == ".md"
+                assert markdown_path.name == "test_image.png.md"
+                
+                # Check snapshot file
+                snapshot_path = Path(result[1].text)
+                assert snapshot_path.exists()
+                assert snapshot_path.suffix == ".log"
+                assert snapshot_path.name == "test_image.png.snapshot.log"
                 
                 # Verify markdown content
-                content = output_path.read_text(encoding="utf-8")
-                assert "# OCR Result" in content
-                assert "**Source Image:**" in content
-                assert test_image in content
-                assert "Hello" in content
-                assert "World" in content
+                markdown_content = markdown_path.read_text(encoding="utf-8")
+                assert "# OCR Result" in markdown_content
+                assert "**Source Image:**" in markdown_content
+                assert test_image in markdown_content
+                assert "Hello" in markdown_content
+                assert "World" in markdown_content
+                
+                # Verify snapshot content
+                snapshot_content = snapshot_path.read_text(encoding="utf-8")
+                assert "role:" in snapshot_content
+                assert "ref:" in snapshot_content
+                assert "Hello" in snapshot_content
+                assert "World" in snapshot_content
                 
                 # Verify OCR was called on preprocessed image (PaddleOCR 2.7+ uses predict())
                 mock_paddleocr.predict.assert_called_once()
@@ -190,9 +212,15 @@ class TestCallTool:
                 
                 result = await mcp_server.handle_call_tool("ocr_image", arguments)
                 
-                output_path = Path(result[0].text)
-                content = output_path.read_text(encoding="utf-8")
-                assert "No text detected" in content
+                # Should return both files even when no text detected
+                assert len(result) == 2
+                markdown_path = Path(result[0].text)
+                markdown_content = markdown_path.read_text(encoding="utf-8")
+                assert "No text detected" in markdown_content
+                
+                # Snapshot should also exist
+                snapshot_path = Path(result[1].text)
+                assert snapshot_path.exists()
 
     async def test_call_tool_unknown_tool(self):
         """Test calling unknown tool raises error"""
@@ -218,7 +246,8 @@ class TestCallTool:
                 
                 # Should be called with default language 'ch'
                 mock_get_ocr.assert_called_once_with(language='ch')
-                assert len(result) == 1
+                # Should return both files
+                assert len(result) == 2
 
     async def test_call_tool_invalid_image_path_type(self):
         """Test calling tool with non-string image_path raises error"""
@@ -256,8 +285,82 @@ class TestCallTool:
                 result = await mcp_server.handle_call_tool("ocr_image", arguments)
                 
                 # Should succeed - extra parameters are ignored
-                assert len(result) == 1
+                # Should return both files
+                assert len(result) == 2
                 assert result[0].type == "text"
+                assert result[1].type == "text"
+
+    @pytest.mark.asyncio
+    async def test_call_tool_both_formats_returned(self, test_image, cleanup_cache):
+        """Test OCR tool call returns both markdown and snapshot formats"""
+        mock_ocr = MagicMock()
+        # Create mock result with bbox information
+        mock_result = create_mock_ocr_result(
+            texts=["Hello", "World"],
+            rec_boxes=[[10, 20, 100, 40], [10, 50, 100, 70]]  # [x_min, y_min, x_max, y_max]
+        )
+        mock_ocr.predict.return_value = [mock_result]
+        
+        with patch("paddleocr_cli.mcp_server.get_ocr", return_value=mock_ocr):
+            with patch("paddleocr_cli.mcp_server.preprocess_image", return_value=test_image):
+                arguments = {
+                    "image_path": test_image,
+                    "language": "ch"
+                }
+                
+                result = await mcp_server.handle_call_tool("ocr_image", arguments)
+                
+                # Should return both files
+                assert len(result) == 2
+                
+                # Check markdown file
+                markdown_path = Path(result[0].text)
+                assert markdown_path.exists()
+                assert markdown_path.suffix == ".md"
+                
+                # Check snapshot file
+                snapshot_path = Path(result[1].text)
+                assert snapshot_path.exists()
+                assert snapshot_path.suffix == ".log"
+                assert snapshot_path.name == "test_image.png.snapshot.log"
+                
+                # Verify snapshot content
+                snapshot_content = snapshot_path.read_text(encoding="utf-8")
+                assert "role:" in snapshot_content
+                assert "ref:" in snapshot_content
+                assert "Hello" in snapshot_content
+                assert "World" in snapshot_content
+                # Check for bbox information
+                assert "bbox" in snapshot_content or "x_min" in snapshot_content or "y_min" in snapshot_content
+
+    @pytest.mark.asyncio
+    async def test_call_tool_snapshot_format_with_polygon(self, test_image, cleanup_cache):
+        """Test snapshot format with polygon bbox (dt_polys)"""
+        mock_ocr = MagicMock()
+        # Create mock result with polygon bbox information
+        mock_result = create_mock_ocr_result(
+            texts=["Text1", "Text2"],
+            dt_polys=[[[10, 20], [100, 20], [100, 40], [10, 40]], 
+                      [[10, 50], [100, 50], [100, 70], [10, 70]]]
+        )
+        mock_ocr.predict.return_value = [mock_result]
+        
+        with patch("paddleocr_cli.mcp_server.get_ocr", return_value=mock_ocr):
+            with patch("paddleocr_cli.mcp_server.preprocess_image", return_value=test_image):
+                arguments = {
+                    "image_path": test_image,
+                    "language": "ch"
+                }
+                
+                result = await mcp_server.handle_call_tool("ocr_image", arguments)
+                
+                # Should return both files
+                assert len(result) == 2
+                snapshot_path = Path(result[1].text)
+                assert snapshot_path.suffix == ".log"
+                content = snapshot_path.read_text(encoding="utf-8")
+                assert "Text1" in content
+                assert "Text2" in content
 
     async def test_call_tool_ocr_error_handling(self, test_image, cleanup_cache):
         """Test error handling when OCR fails"""
@@ -297,19 +400,25 @@ class TestMarkdownOutput:
                 
                 result = await mcp_server.handle_call_tool("ocr_image", arguments)
                 
-                output_path = Path(result[0].text)
-                content = output_path.read_text(encoding="utf-8")
+                # Should return both files
+                assert len(result) == 2
+                markdown_path = Path(result[0].text)
+                markdown_content = markdown_path.read_text(encoding="utf-8")
                 
                 # Check structure
-                lines = content.split("\n")
+                lines = markdown_content.split("\n")
                 assert lines[0] == "# OCR Result"
-                assert "**Source Image:**" in content
+                assert "**Source Image:**" in markdown_content
                 # Language field removed (automatic optimization)
-                assert "---" in content
+                assert "---" in markdown_content
                 
                 # Check that detected texts are listed
-                assert "- Hello" in content or "Hello" in content
-                assert "- World" in content or "World" in content
+                assert "- Hello" in markdown_content or "Hello" in markdown_content
+                assert "- World" in markdown_content or "World" in markdown_content
+                
+                # Check snapshot file also exists
+                snapshot_path = Path(result[1].text)
+                assert snapshot_path.exists()
 
     @pytest.mark.asyncio
     async def test_markdown_output_path(self, test_image, mock_paddleocr, cleanup_cache):
@@ -320,12 +429,18 @@ class TestMarkdownOutput:
                 
                 result = await mcp_server.handle_call_tool("ocr_image", arguments)
                 
-                output_path = Path(result[0].text)
-                expected_path = Path(test_image + ".md")
+                # Should return both files
+                assert len(result) == 2
+                markdown_path = Path(result[0].text)
+                snapshot_path = Path(result[1].text)
+                expected_markdown_path = Path(test_image + ".md")
+                expected_snapshot_path = Path(test_image + ".snapshot.log")
                 
                 # Compare absolute paths to avoid path format differences
-                assert output_path.resolve() == expected_path.resolve()
-                assert output_path.exists()
+                assert markdown_path.resolve() == expected_markdown_path.resolve()
+                assert markdown_path.exists()
+                assert snapshot_path.resolve() == expected_snapshot_path.resolve()
+                assert snapshot_path.exists()
 
 
 @pytest.mark.asyncio
@@ -376,10 +491,12 @@ class TestEdgeCases:
                 
                 result = await mcp_server.handle_call_tool("ocr_image", arguments)
                 
-                output_path = Path(result[0].text)
-                content = output_path.read_text(encoding="utf-8")
+                # Should return both files
+                assert len(result) == 2
+                markdown_path = Path(result[0].text)
+                markdown_content = markdown_path.read_text(encoding="utf-8")
                 # Should include "Valid"
-                assert "Valid" in content
+                assert "Valid" in markdown_content
                 # Empty strings should be filtered out (but we keep them in the list and let markdown filter)
                 # Actually, empty strings in rec_texts are still valid - let's check for both
 
@@ -624,8 +741,10 @@ class TestCleanupErrorHandling:
                         result = await mcp_server.handle_call_tool("ocr_image", arguments)
                         
                         # Should succeed despite cleanup error
-                        assert len(result) == 1
+                        # Should return both files
+                        assert len(result) == 2
                         assert result[0].type == "text"
+                        assert result[1].type == "text"
                 
                 # Cleanup temp file if it exists
                 if Path(temp_file_path).exists():
