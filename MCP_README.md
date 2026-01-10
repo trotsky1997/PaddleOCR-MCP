@@ -4,12 +4,6 @@ MCP (Model Context Protocol) server for PaddleOCR that accepts image input and r
 
 ## Installation
 
-**From PyPI (recommended):**
-```bash
-pip install fast-paddleocr-mcp
-```
-
-**From local directory:**
 ```bash
 uv pip install -e .
 ```
@@ -42,6 +36,13 @@ The server provides a single tool called `ocr_image` that:
 
 - **Input**: `image_path` (string) - Path to the input image file
 - **Output**: Returns the path to the generated markdown file containing OCR results
+- **Automatic optimizations**: All performance optimizations are applied automatically
+  - High-Performance Inference (HPI) with automatic backend selection
+  - GPU acceleration with automatic fallback to CPU
+  - Image preprocessing (downsampling and sharpening)
+  - Multi-threaded CPU processing
+  - Intelligent fallback to simpler configurations if needed
+- **Default language**: Uses 'ch' (Chinese and English) for maximum compatibility
 
 ### Example MCP Request
 
@@ -58,6 +59,8 @@ The server provides a single tool called `ocr_image` that:
   }
 }
 ```
+
+**Note**: Only `image_path` is required. All optimizations are applied automatically.
 
 ### Example MCP Response
 
@@ -88,11 +91,16 @@ The server provides a single tool called `ocr_image` that:
 
 ### Default Settings
 
-The MCP server uses optimized default settings:
-- Fast mode enabled
-- PP-OCRv4 (faster mobile models)
-- 640px image size limit
-- Auto GPU detection (falls back to CPU if GPU not available)
+The MCP server uses optimized default settings with all performance enhancements:
+- **Fast mode enabled**: Disables textline orientation classification
+- **PP-OCRv4**: Uses faster mobile models (PP-OCRv4_mobile_det, PP-OCRv4_mobile_rec)
+- **High-Performance Inference (HPI)**: Automatically enabled (requires PaddleOCR >= 2.7.0)
+- **GPU acceleration**: Auto-detects GPU, falls back to CPU if not available
+- **Image preprocessing**: Automatic downsampling (max 1920px) and sharpening
+- **Multi-threaded CPU**: Uses all available CPU cores
+- **MKL-DNN optimization**: Enabled for Intel CPUs
+- **Default language**: 'ch' (Chinese and English) for maximum compatibility
+- **No backward compatibility**: Requires latest PaddleOCR version with all features supported
 
 ### Output Format
 
@@ -152,24 +160,12 @@ Or using absolute path:
 }
 ```
 
-**Or if installed from PyPI:**
+**Or if installed locally:**
 ```json
 {
   "mcpServers": {
     "paddleocr": {
       "command": "paddleocr-mcp"
-    }
-  }
-}
-```
-
-**Using uvx from PyPI:**
-```json
-{
-  "mcpServers": {
-    "paddleocr": {
-      "command": "uvx",
-      "args": ["fast-paddleocr-mcp", "paddleocr-mcp"]
     }
   }
 }

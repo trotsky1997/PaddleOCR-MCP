@@ -122,16 +122,12 @@ password = your-api-token-here
 
 发布后，可以通过以下方式安装：
 ```bash
-pip install fast-paddleocr-mcp
+pip install paddleocr-mcp
 ```
 
 或使用 `uvx`：
 ```bash
-# Install and run CLI tool
-uvx fast-paddleocr-mcp paddleocr-md <image_path>
-
-# Run MCP server
-uvx fast-paddleocr-mcp paddleocr-mcp
+uvx paddleocr-mcp <image_path>
 ```
 
 ## 版本更新流程
